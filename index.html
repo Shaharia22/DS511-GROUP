@@ -3,164 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Group Formation Portal</title>
+    <title>Class Group Portal</title>
     <style>
-        :root { --primary: #2563eb; --danger: #ef4444; --success: #22c55e; --bg: #f1f5f9; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 20px; color: #1e293b; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        header { text-align: center; margin-bottom: 30px; }
-        .group-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
-        
-        /* Header */
+        :root { --primary: #2563eb; --danger: #ef4444; --bg: #f8fafc; --text: #1e293b; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 30px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        h1 { margin: 0; color: var(--primary); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
         .group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
-        .title-container { display: flex; align-items: center; gap: 8px; flex-grow: 1; }
-        .group-name { font-weight: 700; font-size: 1.1em; cursor: pointer; color: var(--primary); }
-        .edit-icon { cursor: pointer; font-size: 0.9em; opacity: 0.4; }
-        .name-edit-input { padding: 5px; border: 1px solid var(--primary); border-radius: 4px; width: 80%; }
-        .count { font-size: 0.75em; background: #e2e8f0; padding: 2px 8px; border-radius: 10px; }
-
-        /* Members */
-        .member-row { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 10px; margin: 6px 0; border-radius: 6px; border-left: 4px solid var(--primary); font-size: 0.9em; }
-        .remove-btn { color: var(--danger); cursor: pointer; border: none; background: none; font-size: 1.2em; font-weight: bold; }
-
-        /* Input Controls */
-        .input-area { margin-top: 15px; display: flex; flex-direction: column; gap: 10px; }
-        input { padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
-        input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1); }
-        .join-btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .join-btn:hover { background: #1d4ed8; }
-        .full-badge { text-align: center; color: var(--danger); font-weight: bold; font-size: 0.8em; padding: 10px; background: #fee2e2; border-radius: 6px; }
-        
-        /* Loading Overlay */
-        #loader { position: fixed; top: 0; left: 0; width: 100%; background: rgba(255,255,255,0.8); text-align: center; padding: 10px; display: none; z-index: 100; font-weight: bold; color: var(--primary); }
+        .group-title { font-weight: bold; cursor: pointer; color: var(--primary); }
+        .count { font-size: 0.8rem; background: #e2e8f0; padding: 2px 8px; border-radius: 10px; }
+        .member-row { display: flex; justify-content: space-between; background: #f8fafc; padding: 10px; margin: 5px 0; border-radius: 6px; border-left: 4px solid var(--primary); font-size: 0.9rem; }
+        .remove-btn { color: var(--danger); border: none; background: none; cursor: pointer; font-weight: bold; }
+        .inputs { margin-top: 15px; display: flex; flex-direction: column; gap: 8px; }
+        input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
+        .join-btn { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .full-msg { text-align: center; color: var(--danger); font-size: 0.8rem; font-weight: bold; margin-top: 10px; }
+        #loader { position: fixed; top: 10px; right: 10px; background: #1e293b; color: white; padding: 8px 15px; border-radius: 20px; display: none; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
-<div id="loader">Syncing with Cloud...</div>
+<div id="loader">Processing...</div>
 
 <div class="container">
     <header>
-        <h1>🎓 DS511 Group Portal</h1>
-        <p>Real-time group formation. Max 6 members.</p>
+        <h1>Group Formation Hub</h1>
+        <p>Real-time sync enabled. Max 6 members per group.</p>
     </header>
-    <div class="group-grid" id="grid"></div>
+    <div class="grid" id="mainGrid"></div>
 </div>
 
 <script>
-    // --- CONFIGURATION ---
-    const SCRIPT_URL = "YOUR_APPS_SCRIPT_URL_HERE"; // PASTE YOUR GOOGLE DEPLOYMENT URL HERE
-    const MAX_MEMBERS = 6;
-    const TOTAL_GROUPS = 6;
+    const BIN_ID = "698f137aae596e708f27cbf9";
+    const API_KEY = "$2a$10$Qh6w2BJC0RLQ/T/UCryTe.hDIEFVgBJ5SSJLHJ.WYCDC0ZrBYeeWS";
+    const URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+    const MAX = 6;
 
-    let groupData = Array.from({ length: TOTAL_GROUPS }, (_, i) => ({ 
-        id: i + 1, 
-        groupTitle: `Group ${i + 1}`, 
-        members: [] 
-    }));
+    let groupData = [];
 
-    // --- CLOUD SYNC ---
+    // --- CLOUD LOGIC ---
     async function loadData() {
-        document.getElementById('loader').style.display = 'block';
+        toggleLoader(true);
         try {
-            const response = await fetch(SCRIPT_URL);
-            const text = await response.text();
-            if (text && text !== "undefined") {
-                groupData = JSON.parse(text);
-            }
-        } catch (e) { console.log("Starting with local data"); }
-        document.getElementById('loader').style.display = 'none';
-        render();
+            const res = await fetch(`${URL}/latest`, { headers: { "X-Master-Key": API_KEY } });
+            const data = await res.json();
+            groupData = data.record;
+            render();
+        } catch (e) { console.error("Load Error"); }
+        toggleLoader(false);
     }
 
-    async function syncCloud() {
-        document.getElementById('loader').style.display = 'block';
-        const formData = new FormData();
-        formData.append('fullData', JSON.stringify(groupData));
-        await fetch(SCRIPT_URL, { method: 'POST', body: formData });
-        document.getElementById('loader').style.display = 'none';
-        render();
+    async function saveData() {
+        toggleLoader(true);
+        try {
+            await fetch(URL, {
+                method: 'PUT',
+                headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
+                body: JSON.stringify(groupData)
+            });
+            render();
+        } catch (e) { alert("Save failed!"); }
+        toggleLoader(false);
     }
 
-    // --- ACTIONS ---
+    function toggleLoader(show) { document.getElementById('loader').style.display = show ? 'block' : 'none'; }
+
+    // --- APP LOGIC ---
     function join(groupId) {
-        const idInput = document.getElementById(`id-${groupId}`);
-        const nameInput = document.getElementById(`name-${groupId}`);
-        
-        // Clean ID: Remove any non-numbers just in case
-        const id = idInput.value.replace(/\D/g, ''); 
-        const name = nameInput.value.trim();
+        const idIn = document.getElementById(`id-${groupId}`);
+        const nameIn = document.getElementById(`name-${groupId}`);
+        const id = idIn.value.replace(/\D/g, ''); // Number only
+        const name = nameIn.value.trim();
 
-        if (!id || !name) return alert("Numbers only for ID and Name is required!");
-        if (groupData.some(g => g.members.some(m => m.id === id))) return alert("This ID is already in a group!");
+        if (!id || !name) return alert("Enter ID (numbers only) and Name!");
+        if (groupData.some(g => g.members.some(m => m.id === id))) return alert("ID already in a group!");
 
         const group = groupData.find(g => g.id === groupId);
-        if (group.members.length < MAX_MEMBERS) {
+        if (group.members.length < MAX) {
             group.members.push({ id, name });
-            syncCloud();
+            saveData();
         }
     }
 
-    function removeMember(groupId, studentId) {
-        if(confirm("Are you sure you want to remove this member?")) {
+    function remove(groupId, studentId) {
+        if (confirm("Leave this group?")) {
             const group = groupData.find(g => g.id === groupId);
             group.members = group.members.filter(m => m.id !== studentId);
-            syncCloud();
+            saveData();
         }
     }
 
-    function renameGroup(groupId) {
-        const newName = prompt("Enter new Group Name:", groupData.find(g => g.id === groupId).groupTitle);
-        if (newName) {
-            groupData.find(g => g.id === groupId).groupTitle = newName;
-            syncCloud();
+    function rename(groupId) {
+        const group = groupData.find(g => g.id === groupId);
+        const newTitle = prompt("Edit Group Name:", group.groupTitle);
+        if (newTitle) {
+            group.groupTitle = newTitle;
+            saveData();
         }
     }
 
-    // --- UI RENDER ---
     function render() {
-        const grid = document.getElementById('grid');
+        const grid = document.getElementById('mainGrid');
         grid.innerHTML = '';
-
         groupData.forEach(group => {
-            const isFull = group.members.length >= MAX_MEMBERS;
+            const isFull = group.members.length >= MAX;
             const card = document.createElement('div');
             card.className = 'card';
-            
             card.innerHTML = `
                 <div class="group-header">
-                    <div class="title-container" onclick="renameGroup(${group.id})">
-                        <span class="group-name">${group.groupTitle}</span>
-                        <span class="edit-icon">✎</span>
-                    </div>
-                    <span class="count">${group.members.length}/${MAX_MEMBERS}</span>
+                    <span class="group-title" onclick="rename(${group.id})">${group.groupTitle} ✎</span>
+                    <span class="count">${group.members.length}/${MAX}</span>
                 </div>
-
-                <div class="member-list">
+                <div class="list">
                     ${group.members.map(m => `
                         <div class="member-row">
-                            <div class="member-info"><strong>${m.id}</strong> — ${m.name}</div>
-                            <button class="remove-btn" onclick="removeMember(${group.id}, '${m.id}')">×</button>
+                            <span><b>${m.id}</b> - ${m.name}</span>
+                            <button class="remove-btn" onclick="remove(${group.id}, '${m.id}')">✕</button>
                         </div>
                     `).join('')}
                 </div>
-                
                 ${!isFull ? `
-                    <div class="input-area">
-                        <input type="number" id="id-${group.id}" placeholder="Student ID (Numbers Only)" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-                        <input type="text" id="name-${group.id}" placeholder="Student Full Name">
-                        <button class="join-btn" onclick="join(${group.id})">Join Group</button>
+                    <div class="inputs">
+                        <input type="text" id="id-${group.id}" placeholder="Student ID (Numbers)" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+                        <input type="text" id="name-${group.id}" placeholder="Full Name">
+                        <button class="join-btn" onclick="join(${group.id})">Join</button>
                     </div>
-                ` : '<div class="full-badge">GROUP COMPLETED</div>'}
+                ` : `<div class="full-msg">GROUP FULL</div>`}
             `;
             grid.appendChild(card);
         });
     }
 
-    // Initial Load
     loadData();
 </script>
-
 </body>
 </html>
